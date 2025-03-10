@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -82,12 +81,12 @@
                 <label for="price">Pris (kr):</label>
                 <input type="number" id="price" value="2990000">
             </div>
+        </div>
+        <div>
             <div class="form-group">
                 <label for="communal">Kommunale avgifter per år (kr):</label>
                 <input type="number" id="communal" value="7242">
             </div>
-        </div>
-        <div>
             <div class="form-group">
                 <label for="shared">Felleskostnader per måned (kr):</label>
                 <input type="number" id="shared" value="2000">
@@ -95,14 +94,6 @@
             <div class="form-group">
                 <label for="propertyTax">Eiendomsskatt per år (kr):</label>
                 <input type="number" id="propertyTax" value="2437">
-            </div>
-            <div class="form-group">
-                <label for="equity">Egenkapital (kr):</label>
-                <input type="number" id="equity" value="1500000">
-            </div>
-            <div class="form-group">
-                <label for="threshold">Månedlig budsjettgrense (kr):</label>
-                <input type="number" id="threshold" value="14000">
             </div>
             <div class="form-group">
                 <label for="interestRate">Årlig rente (%):</label>
@@ -123,7 +114,11 @@
         // Initial graph on page load
         generateGraph();
         
-        function calculateMonthlyCost(price, communalFee, sharedCost, propertyTax, equity, interestRate) {
+        function calculateMonthlyCost(price, communalFee, sharedCost, propertyTax, interestRate) {
+            // Fixed values
+            const equity = 1500000; // Removed from UI, fixed at 1.5M
+            const threshold = 14000; // Removed from UI, fixed at 14K
+            
             const loan = price - equity;
             const monthlyInterestRate = interestRate / 100 / 12;
             const n = 30 * 12; // 360 months (30 years)
@@ -134,11 +129,26 @@
             const monthlyCommunalFee = communalFee / 12;
             const monthlyPropertyTax = propertyTax / 12;
             
-            return monthlyPayment + monthlyCommunalFee + sharedCost + monthlyPropertyTax;
+            return {
+                total: monthlyPayment + monthlyCommunalFee + sharedCost + monthlyPropertyTax,
+                threshold: threshold
+            };
         }
         
         function formatNumber(num) {
-            return new Intl.NumberFormat('no-NO').format(Math.round(num));
+            // Format with spaces as thousand separators and kr suffix
+            return new Intl.NumberFormat('no-NO', { 
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(num)) + " kr";
+        }
+        
+        function formatNumberAxis(num) {
+            // Format with spaces as thousand separators, no kr suffix, for axis
+            return new Intl.NumberFormat('no-NO', { 
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(num));
         }
         
         function generateGraph() {
@@ -148,17 +158,18 @@
             const communalFee = Number(document.getElementById('communal').value);
             const sharedCost = Number(document.getElementById('shared').value);
             const propertyTax = Number(document.getElementById('propertyTax').value);
-            const equity = Number(document.getElementById('equity').value);
-            const threshold = Number(document.getElementById('threshold').value);
             const interestRate = Number(document.getElementById('interestRate').value);
             
             // Generate price range
             const priceRange = [];
             const costRange = [];
+            let threshold = 0;
             
             for (let p = price - 200000; p <= price + 900000; p += 100000) {
                 priceRange.push(p);
-                costRange.push(calculateMonthlyCost(p, communalFee, sharedCost, propertyTax, equity, interestRate));
+                const costData = calculateMonthlyCost(p, communalFee, sharedCost, propertyTax, interestRate);
+                costRange.push(costData.total);
+                threshold = costData.threshold;
             }
             
             // Clear previous chart
@@ -185,7 +196,7 @@
             
             svg.append("g")
                 .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).tickFormat(d => formatNumber(d)))
+                .call(d3.axisBottom(x).tickFormat(d => formatNumberAxis(d)))
                 .selectAll("text")
                     .style("text-anchor", "end")
                     .attr("dx", "-.8em")
@@ -207,7 +218,7 @@
                 .range([height, 0]);
             
             svg.append("g")
-                .call(d3.axisLeft(y).tickFormat(d => formatNumber(d)));
+                .call(d3.axisLeft(y).tickFormat(d => formatNumberAxis(d)));
             
             // Add Y axis label
             svg.append("text")
@@ -234,6 +245,15 @@
                 .attr("x2", width)
                 .attr("y1", y(threshold))
                 .attr("y2", y(threshold));
+                
+            // Add threshold label
+            svg.append("text")
+                .attr("x", width - 5)
+                .attr("y", y(threshold) - 5)
+                .attr("text-anchor", "end")
+                .style("fill", "red")
+                .style("font-size", "12px")
+                .text(formatNumber(threshold));
             
             // Add bars
             svg.selectAll(".bar")
