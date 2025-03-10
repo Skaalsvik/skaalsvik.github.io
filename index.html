@@ -8,14 +8,18 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
+            max-width: 100%;
+        }
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
         }
         .form-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
         .form-group {
             margin-bottom: 15px;
@@ -24,28 +28,32 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            font-size: 0.9rem;
         }
         input {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 15px;
+            padding: 12px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
+            font-size: 1rem;
+            margin: 15px 0;
+            width: 100%;
         }
         button:hover {
             background-color: #45a049;
         }
         .chart-container {
-            margin-top: 30px;
+            width: 100%;
+            overflow-x: auto;
         }
         .bar {
             fill: steelblue;
@@ -54,7 +62,7 @@
             fill: #7db9e8;
         }
         .axis-label {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
         }
         .threshold-line {
@@ -63,8 +71,33 @@
             stroke-width: 2;
         }
         .bar-value {
-            font-size: 12px;
+            font-size: 10px;
             text-anchor: middle;
+        }
+        
+        /* Media Queries */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .form-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            button {
+                width: auto;
+                padding: 10px 15px;
+            }
+            .axis-label {
+                font-size: 14px;
+            }
+            .bar-value {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -112,7 +145,25 @@
         document.getElementById('calculate').addEventListener('click', generateGraph);
         
         // Initial graph on page load
-        generateGraph();
+        window.addEventListener('load', function() {
+            generateGraph();
+        });
+        
+        // Redraw on window resize
+        window.addEventListener('resize', debounce(function() {
+            generateGraph();
+        }, 250));
+        
+        // Debounce function to limit how often a function is called
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
         
         function calculateMonthlyCost(price, communalFee, sharedCost, propertyTax, interestRate) {
             // Fixed values
@@ -175,16 +226,25 @@
             // Clear previous chart
             d3.select("#chart").html("");
             
-            // Set dimensions and margins
-            const margin = {top: 50, right: 30, bottom: 90, left: 100};
-            const width = 900 - margin.left - margin.right;
-            const height = 500 - margin.top - margin.bottom;
+            // Set dimensions and margins - responsive
+            const chartContainer = document.querySelector('.chart-container');
+            const containerWidth = chartContainer.clientWidth;
+            const isMobile = window.innerWidth < 768;
+            
+            const margin = isMobile 
+                ? {top: 40, right: 20, bottom: 90, left: 70} 
+                : {top: 50, right: 30, bottom: 90, left: 100};
+                
+            const width = Math.max(containerWidth - margin.left - margin.right, 300);
+            const height = isMobile ? 350 : 500 - margin.top - margin.bottom;
             
             // Create SVG
             const svg = d3.select("#chart")
                 .append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
+                    .style("display", "block")
+                    .style("margin", "0 auto")
                 .append("g")
                     .attr("transform", `translate(${margin.left},${margin.top})`);
             
@@ -196,20 +256,28 @@
             
             svg.append("g")
                 .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).tickFormat(d => formatNumberAxis(d)))
+                .call(d3.axisBottom(x).tickFormat(d => {
+                    // On mobile, show fewer ticks
+                    if (isMobile && priceRange.indexOf(d) % 2 !== 0) {
+                        return "";
+                    }
+                    return formatNumberAxis(d);
+                }))
                 .selectAll("text")
                     .style("text-anchor", "end")
                     .attr("dx", "-.8em")
                     .attr("dy", ".15em")
-                    .attr("transform", "rotate(-45)");
+                    .attr("transform", "rotate(-45)")
+                    .style("font-size", isMobile ? "8px" : "10px");
             
             // Add X axis label
             svg.append("text")
                 .attr("class", "axis-label")
                 .attr("text-anchor", "middle")
                 .attr("x", width / 2)
-                .attr("y", height + margin.bottom - 10)
-                .text("Kjøpepris (kr)");
+                .attr("y", height + margin.bottom - (isMobile ? 15 : 10))
+                .text("Kjøpepris (kr)")
+                .style("font-size", isMobile ? "10px" : "14px");
             
             // Y axis
             const maxCost = Math.max(...costRange) + 2000;
@@ -218,7 +286,9 @@
                 .range([height, 0]);
             
             svg.append("g")
-                .call(d3.axisLeft(y).tickFormat(d => formatNumberAxis(d)));
+                .call(d3.axisLeft(y).tickFormat(d => formatNumberAxis(d)))
+                .selectAll("text")
+                .style("font-size", isMobile ? "8px" : "10px");
             
             // Add Y axis label
             svg.append("text")
@@ -226,15 +296,16 @@
                 .attr("text-anchor", "middle")
                 .attr("transform", "rotate(-90)")
                 .attr("x", -height / 2)
-                .attr("y", -margin.left + 30)
-                .text("Totale kostnader per måned (kr)");
+                .attr("y", -margin.left + (isMobile ? 20 : 30))
+                .text("Totale kostnader per måned (kr)")
+                .style("font-size", isMobile ? "10px" : "14px");
             
             // Add title
             svg.append("text")
                 .attr("x", width / 2)
                 .attr("y", -margin.top / 2)
                 .attr("text-anchor", "middle")
-                .style("font-size", "18px")
+                .style("font-size", isMobile ? "14px" : "18px")
                 .style("font-weight", "bold")
                 .text(address);
             
@@ -252,7 +323,7 @@
                 .attr("y", y(threshold) - 5)
                 .attr("text-anchor", "end")
                 .style("fill", "red")
-                .style("font-size", "12px")
+                .style("font-size", isMobile ? "8px" : "12px")
                 .text(formatNumber(threshold));
             
             // Add bars
@@ -266,14 +337,22 @@
                     .attr("width", x.bandwidth())
                     .attr("height", d => height - y(d));
             
-            // Add value labels on top of bars
+            // Add value labels on top of bars (only if not mobile or if mobile with fewer labels)
             svg.selectAll(".bar-value")
                 .data(costRange)
                 .enter()
                 .append("text")
                     .attr("class", "bar-value")
                     .attr("x", (d, i) => x(priceRange[i]) + x.bandwidth() / 2)
-                    .attr("y", d => y(d) - 10)
+                    .attr("y", d => y(d) - 5)
+                    .style("visibility", function(d, i) {
+                        // On mobile, show fewer values
+                        if (isMobile && i % 2 !== 0) {
+                            return "hidden";
+                        }
+                        return "visible";
+                    })
+                    .style("font-size", isMobile ? "8px" : "10px")
                     .text(d => formatNumber(d));
         }
     </script>
