@@ -3,358 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boligkostkalkulator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <title>Boligkalkulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0 auto;
-            padding: 10px;
-            max-width: 100%;
-        }
-        h1 {
-            font-size: 1.5rem;
-            text-align: center;
-        }
-        .form-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        * {
             box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin: 15px 0;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .chart-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-        .bar {
-            fill: steelblue;
-        }
-        .bar:hover {
-            fill: #7db9e8;
-        }
-        .axis-label {
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .threshold-line {
-            stroke: red;
-            stroke-dasharray: 5,5;
-            stroke-width: 2;
-        }
-        .bar-value {
-            font-size: 10px;
-            text-anchor: middle;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
         
-        /* Media Queries */
-        @media (min-width: 768px) {
-            body {
-                padding: 20px;
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .input-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1 1 100%;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1 1 300px;
+            max-width: 100%;
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #3498db;
+        }
+        
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .result-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .result-table th, .result-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .result-table th {
+            background-color: #f2f2f2;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
             }
-            h1 {
-                font-size: 2rem;
-            }
-            .form-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }
-            button {
-                width: auto;
-                padding: 10px 15px;
-            }
-            .axis-label {
-                font-size: 14px;
-            }
-            .bar-value {
-                font-size: 12px;
+            
+            .result-card {
+                max-width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <h1>Boligkostkalkulator</h1>
+    <h1>Boligkalkulator</h1>
     
-    <div class="form-container">
-        <div>
-            <div class="form-group">
-                <label for="address">Adresse:</label>
-                <input type="text" id="address" value="Øysteins gate 4">
-            </div>
-            <div class="form-group">
-                <label for="price">Pris (kr):</label>
-                <input type="number" id="price" value="2990000">
-            </div>
+    <div class="container">
+        <div class="input-section">
+            <h2>Boliginformasjon</h2>
+            
+            <label for="boligpris">Boligpris (kr)</label>
+            <input type="number" id="boligpris" value="4000000">
+            
+            <label for="boligareal">Boligareal (m²)</label>
+            <input type="number" id="boligareal" value="80">
+            
+            <label for="omkostninger">Omkostninger (kr)</label>
+            <input type="number" id="omkostninger" value="100000">
+            
+            <label for="felleskostnader">Felleskostnader (kr/mnd)</label>
+            <input type="number" id="felleskostnader" value="3000">
+            
+            <label for="kommunale">Kommunale avgifter (kr/år)</label>
+            <input type="number" id="kommunale" value="12000">
+            
+            <label for="eiendomsskatt">Eiendomsskatt (kr/år)</label>
+            <input type="number" id="eiendomsskatt" value="3000">
+            
+            <h2>Låneinformasjon</h2>
+            
+            <label for="rente">Rente (%)</label>
+            <input type="number" id="rente" value="5.5" step="0.1">
+            
+            <label for="lopetid">Løpetid (år)</label>
+            <input type="number" id="lopetid" value="30">
+            
+            <h2>Egenandel og lån</h2>
+            
+            <label for="amund-lan">Amund betjener lån (kr)</label>
+            <input type="number" id="amund-lan" value="1500000">
+            
+            <label for="sofie-egenandel">Sofie betaler fra egen lomme (kr)</label>
+            <input type="number" id="sofie-egenandel" value="1000000">
+            
+            <button id="calculate-btn">Beregn</button>
         </div>
-        <div>
-            <div class="form-group">
-                <label for="communal">Kommunale avgifter per år (kr):</label>
-                <input type="number" id="communal" value="7242">
+        
+        <div class="result-card">
+            <h2>Eierandel</h2>
+            <div class="chart-container">
+                <canvas id="eierandel-chart"></canvas>
             </div>
-            <div class="form-group">
-                <label for="shared">Felleskostnader per måned (kr):</label>
-                <input type="number" id="shared" value="2000">
+            <table class="result-table" id="eierandel-table">
+                <thead>
+                    <tr>
+                        <th>Person</th>
+                        <th>Andel</th>
+                        <th>Prosentvis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="result-card">
+            <h2>Kjøpskostnader</h2>
+            <div class="chart-container">
+                <canvas id="kjopskostnader-chart"></canvas>
             </div>
-            <div class="form-group">
-                <label for="propertyTax">Eiendomsskatt per år (kr):</label>
-                <input type="number" id="propertyTax" value="2437">
+            <p>Totale omkostninger: <span class="result-value" id="total-omkostninger">0 kr</span></p>
+            <table class="result-table" id="omkostninger-table">
+                <thead>
+                    <tr>
+                        <th>Person</th>
+                        <th>Andel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="result-card">
+            <h2>Månedlige kostnader</h2>
+            <div class="chart-container">
+                <canvas id="kostnader-chart"></canvas>
             </div>
-            <div class="form-group">
-                <label for="interestRate">Årlig rente (%):</label>
-                <input type="number" id="interestRate" value="5.5" step="0.1">
-            </div>
+            <table class="result-table" id="kostnader-table">
+                <thead>
+                    <tr>
+                        <th>Person</th>
+                        <th>Lån (kr/mnd)</th>
+                        <th>Fellesutg. (kr/mnd)</th>
+                        <th>Total (kr/mnd)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="result-card">
+            <h2>Kvadratmeterpris</h2>
+            <p>Kvadratmeterpris: <span class="result-value" id="kvm-pris">0 kr/m²</span></p>
+            <p>Boligareal: <span id="boligareal-verdi">0 m²</span></p>
+            <p>Total boligpris: <span id="total-boligpris">0 kr</span></p>
         </div>
     </div>
-    
-    <button id="calculate">Generer graf</button>
-    
-    <div class="chart-container">
-        <div id="chart"></div>
-    </div>
-    
+
     <script>
-        document.getElementById('calculate').addEventListener('click', generateGraph);
-        
-        // Initial graph on page load
-        window.addEventListener('load', function() {
-            generateGraph();
-        });
-        
-        // Redraw on window resize
-        window.addEventListener('resize', debounce(function() {
-            generateGraph();
-        }, 250));
-        
-        // Debounce function to limit how often a function is called
-        function debounce(func, wait) {
-            let timeout;
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), wait);
-            };
-        }
-        
-        function calculateMonthlyCost(price, communalFee, sharedCost, propertyTax, interestRate) {
-            // Fixed values
-            const equity = 1500000; // Removed from UI, fixed at 1.5M
-            const threshold = 14000; // Removed from UI, fixed at 14K
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisere grafer med tomme data
+            const eierandelChart = new Chart(document.getElementById('eierandel-chart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Amund', 'Sofie', 'Emil'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#3498db', '#e74c3c', '#2ecc71']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
             
-            const loan = price - equity;
-            const monthlyInterestRate = interestRate / 100 / 12;
-            const n = 30 * 12; // 360 months (30 years)
+            const kjopskostnaderChart = new Chart(document.getElementById('kjopskostnader-chart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Amund', 'Sofie', 'Emil'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#3498db', '#e74c3c', '#2ecc71']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
             
-            const monthlyPayment = loan * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, n) / 
-                                 (Math.pow(1 + monthlyInterestRate, n) - 1);
+            const kostnaderChart = new Chart(document.getElementById('kostnader-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Emil', 'Sofie', 'Amund'],
+                    datasets: [{
+                        label: 'Månedlige lånekostnader',
+                        data: [0, 0, 0],
+                        backgroundColor: '#3498db'
+                    }, {
+                        label: 'Månedlige felleskostnader',
+                        data: [0, 0, 0],
+                        backgroundColor: '#e74c3c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
             
-            const monthlyCommunalFee = communalFee / 12;
-            const monthlyPropertyTax = propertyTax / 12;
+            // Beregn knapp
+            document.getElementById('calculate-btn').addEventListener('click', calculate);
             
-            return {
-                total: monthlyPayment + monthlyCommunalFee + sharedCost + monthlyPropertyTax,
-                threshold: threshold
-            };
-        }
-        
-        function formatNumber(num) {
-            // Format with spaces as thousand separators and kr suffix
-            return new Intl.NumberFormat('no-NO', { 
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(Math.round(num)) + " kr";
-        }
-        
-        function formatNumberAxis(num) {
-            // Format with spaces as thousand separators, no kr suffix, for axis
-            return new Intl.NumberFormat('no-NO', { 
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(Math.round(num));
-        }
-        
-        function generateGraph() {
-            // Get input values
-            const address = document.getElementById('address').value;
-            const price = Number(document.getElementById('price').value);
-            const communalFee = Number(document.getElementById('communal').value);
-            const sharedCost = Number(document.getElementById('shared').value);
-            const propertyTax = Number(document.getElementById('propertyTax').value);
-            const interestRate = Number(document.getElementById('interestRate').value);
+            // Beregn når siden lastes
+            calculate();
             
-            // Generate price range
-            const priceRange = [];
-            const costRange = [];
-            let threshold = 0;
-            
-            for (let p = price - 200000; p <= price + 900000; p += 100000) {
-                priceRange.push(p);
-                const costData = calculateMonthlyCost(p, communalFee, sharedCost, propertyTax, interestRate);
-                costRange.push(costData.total);
-                threshold = costData.threshold;
+            function calculate() {
+                // Hent verdier fra input
+                const boligpris = parseFloat(document.getElementById('boligpris').value) || 0;
+                const boligareal = parseFloat(document.getElementById('boligareal').value) || 0;
+                const totaleOmkostninger = parseFloat(document.getElementById('omkostninger').value) || 0;
+                const felleskostnader = parseFloat(document.getElementById('felleskostnader').value) || 0;
+                const kommunaleAvgifter = parseFloat(document.getElementById('kommunale').value) || 0;
+                const eiendomsskatt = parseFloat(document.getElementById('eiendomsskatt').value) || 0;
+                const rente = parseFloat(document.getElementById('rente').value) || 0;
+                const lopetid = parseFloat(document.getElementById('lopetid').value) || 0;
+                const amundLan = parseFloat(document.getElementById('amund-lan').value) || 0;
+                const sofieEgenandel = parseFloat(document.getElementById('sofie-egenandel').value) || 0;
+                
+                // Beregn Emils lån
+                const emilLan = boligpris - amundLan - sofieEgenandel;
+                
+                // Beregn eierandeler
+                const amundEierandel = amundLan;
+                const sofieEierandel = sofieEgenandel;
+                const emilEierandel = emilLan;
+                const totalEierandel = amundEierandel + sofieEierandel + emilEierandel;
+                
+                const amundEierandelProsent = (amundEierandel / totalEierandel) * 100;
+                const sofieEierandelProsent = (sofieEierandel / totalEierandel) * 100;
+                const emilEierandelProsent = (emilEierandel / totalEierandel) * 100;
+                
+                // Beregn omkostninger basert på eierandel
+                const amundOmkostninger = (amundEierandelProsent / 100) * totaleOmkostninger;
+                const sofieOmkostninger = (sofieEierandelProsent / 100) * totaleOmkostninger;
+                const emilOmkostninger = (emilEierandelProsent / 100) * totaleOmkostninger;
+                
+                // Beregn månedlig kostnad for lån
+                const manedligRente = rente / 100 / 12;
+                const antallManeder = lopetid * 12;
+                
+                // Formel for månedlig lånekostnad:
+                // P × [r × (1 + r)^n] / [(1 + r)^n - 1]
+                // hvor P er lånebeløp, r er månedlig rente, n er antall måneder
+                
+                const amundManedligLanekostnad = amundLan * (manedligRente * Math.pow(1 + manedligRente, antallManeder)) / (Math.pow(1 + manedligRente, antallManeder) - 1);
+                const emilManedligLanekostnad = emilLan * (manedligRente * Math.pow(1 + manedligRente, antallManeder)) / (Math.pow(1 + manedligRente, antallManeder) - 1);
+                
+                // Beregn månedlige felleskostnader
+                const totaleArligeFelleskostnader = (felleskostnader * 12) + kommunaleAvgifter + eiendomsskatt;
+                const totaleFelleskostnaderMnd = totaleArligeFelleskostnader / 12;
+                
+                // Amund betaler ikke felleskostnader
+                const sofieMndFelles = totaleFelleskostnaderMnd * (sofieEierandelProsent / (sofieEierandelProsent + emilEierandelProsent));
+                const emilMndFelles = totaleFelleskostnaderMnd * (emilEierandelProsent / (sofieEierandelProsent + emilEierandelProsent));
+                
+                // Beregn totale månedlige kostnader
+                const amundTotalMnd = amundManedligLanekostnad;
+                const sofieTotalMnd = sofieMndFelles;
+                const emilTotalMnd = emilManedligLanekostnad + emilMndFelles;
+                
+                // Beregn kvadratmeterpris
+                const kvmPris = boligpris / boligareal;
+                
+                // Oppdater eierandel-grafen
+                eierandelChart.data.datasets[0].data = [amundEierandel, sofieEierandel, emilEierandel];
+                eierandelChart.update();
+                
+                // Oppdater omkostninger-grafen
+                kjopskostnaderChart.data.datasets[0].data = [amundOmkostninger, sofieOmkostninger, emilOmkostninger];
+                kjopskostnaderChart.update();
+                
+                // Oppdater kostnader-grafen
+                kostnaderChart.data.datasets[0].data = [emilManedligLanekostnad, 0, amundManedligLanekostnad];
+                kostnaderChart.data.datasets[1].data = [emilMndFelles, sofieMndFelles, 0];
+                kostnaderChart.update();
+                
+                // Oppdater eierandel tabellen
+                const eierandelTable = document.getElementById('eierandel-table').getElementsByTagName('tbody')[0];
+                eierandelTable.innerHTML = '';
+                
+                const amundRow = eierandelTable.insertRow();
+                amundRow.insertCell(0).textContent = 'Amund';
+                amundRow.insertCell(1).textContent = formatNumber(amundEierandel) + ' kr';
+                amundRow.insertCell(2).textContent = amundEierandelProsent.toFixed(2) + '%';
+                
+                const sofieRow = eierandelTable.insertRow();
+                sofieRow.insertCell(0).textContent = 'Sofie';
+                sofieRow.insertCell(1).textContent = formatNumber(sofieEierandel) + ' kr';
+                sofieRow.insertCell(2).textContent = sofieEierandelProsent.toFixed(2) + '%';
+                
+                const emilRow = eierandelTable.insertRow();
+                emilRow.insertCell(0).textContent = 'Emil';
+                emilRow.insertCell(1).textContent = formatNumber(emilEierandel) + ' kr';
+                emilRow.insertCell(2).textContent = emilEierandelProsent.toFixed(2) + '%';
+                
+                // Oppdater omkostninger tabellen
+                const omkostningerTable = document.getElementById('omkostninger-table').getElementsByTagName('tbody')[0];
+                omkostningerTable.innerHTML = '';
+                
+                const amundOmkRow = omkostningerTable.insertRow();
+                amundOmkRow.insertCell(0).textContent = 'Amund';
+                amundOmkRow.insertCell(1).textContent = formatNumber(Math.round(amundOmkostninger)) + ' kr';
+                
+                const sofieOmkRow = omkostningerTable.insertRow();
+                sofieOmkRow.insertCell(0).textContent = 'Sofie';
+                sofieOmkRow.insertCell(1).textContent = formatNumber(Math.round(sofieOmkostninger)) + ' kr';
+                
+                const emilOmkRow = omkostningerTable.insertRow();
+                emilOmkRow.insertCell(0).textContent = 'Emil';
+                emilOmkRow.insertCell(1).textContent = formatNumber(Math.round(emilOmkostninger)) + ' kr';
+                
+                // Oppdater kostnader tabellen
+                const kostnaderTable = document.getElementById('kostnader-table').getElementsByTagName('tbody')[0];
+                kostnaderTable.innerHTML = '';
+                
+                const emilKostRow = kostnaderTable.insertRow();
+                emilKostRow.insertCell(0).textContent = 'Emil';
+                emilKostRow.insertCell(1).textContent = formatNumber(Math.round(emilManedligLanekostnad)) + ' kr';
+                emilKostRow.insertCell(2).textContent = formatNumber(Math.round(emilMndFelles)) + ' kr (' + emilEierandelProsent.toFixed(0) + '%)';
+                emilKostRow.insertCell(3).textContent = formatNumber(Math.round(emilTotalMnd)) + ' kr';
+                
+                const sofieKostRow = kostnaderTable.insertRow();
+                sofieKostRow.insertCell(0).textContent = 'Sofie';
+                sofieKostRow.insertCell(1).textContent = '0 kr';
+                sofieKostRow.insertCell(2).textContent = formatNumber(Math.round(sofieMndFelles)) + ' kr (' + sofieEierandelProsent.toFixed(0) + '%)';
+                sofieKostRow.insertCell(3).textContent = formatNumber(Math.round(sofieTotalMnd)) + ' kr';
+                
+                const amundKostRow = kostnaderTable.insertRow();
+                amundKostRow.insertCell(0).textContent = 'Amund';
+                amundKostRow.insertCell(1).textContent = formatNumber(Math.round(amundManedligLanekostnad)) + ' kr';
+                amundKostRow.insertCell(2).textContent = '0 kr';
+                amundKostRow.insertCell(3).textContent = formatNumber(Math.round(amundTotalMnd)) + ' kr';
+                
+                // Oppdater total omkostninger
+                document.getElementById('total-omkostninger').textContent = formatNumber(Math.round(totaleOmkostninger)) + ' kr';
+                
+                // Oppdater kvadratmeterpris
+                document.getElementById('kvm-pris').textContent = formatNumber(Math.round(kvmPris)) + ' kr/m²';
+                document.getElementById('boligareal-verdi').textContent = boligareal + ' m²';
+                document.getElementById('total-boligpris').textContent = formatNumber(boligpris) + ' kr';
             }
             
-            // Clear previous chart
-            d3.select("#chart").html("");
-            
-            // Set dimensions and margins - responsive
-            const chartContainer = document.querySelector('.chart-container');
-            const containerWidth = chartContainer.clientWidth;
-            const isMobile = window.innerWidth < 768;
-            
-            const margin = isMobile 
-                ? {top: 40, right: 20, bottom: 90, left: 70} 
-                : {top: 50, right: 30, bottom: 90, left: 100};
-                
-            const width = Math.max(containerWidth - margin.left - margin.right, 300);
-            const height = isMobile ? 350 : 500 - margin.top - margin.bottom;
-            
-            // Create SVG
-            const svg = d3.select("#chart")
-                .append("svg")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .style("display", "block")
-                    .style("margin", "0 auto")
-                .append("g")
-                    .attr("transform", `translate(${margin.left},${margin.top})`);
-            
-            // X axis
-            const x = d3.scaleBand()
-                .range([0, width])
-                .domain(priceRange.map(d => d))
-                .padding(0.2);
-            
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).tickFormat(d => {
-                    // On mobile, show fewer ticks
-                    if (isMobile && priceRange.indexOf(d) % 2 !== 0) {
-                        return "";
-                    }
-                    return formatNumberAxis(d);
-                }))
-                .selectAll("text")
-                    .style("text-anchor", "end")
-                    .attr("dx", "-.8em")
-                    .attr("dy", ".15em")
-                    .attr("transform", "rotate(-45)")
-                    .style("font-size", isMobile ? "8px" : "10px");
-            
-            // Add X axis label
-            svg.append("text")
-                .attr("class", "axis-label")
-                .attr("text-anchor", "middle")
-                .attr("x", width / 2)
-                .attr("y", height + margin.bottom - (isMobile ? 15 : 10))
-                .text("Kjøpepris (kr)")
-                .style("font-size", isMobile ? "10px" : "14px");
-            
-            // Y axis
-            const maxCost = Math.max(...costRange) + 2000;
-            const y = d3.scaleLinear()
-                .domain([0, maxCost])
-                .range([height, 0]);
-            
-            svg.append("g")
-                .call(d3.axisLeft(y).tickFormat(d => formatNumberAxis(d)))
-                .selectAll("text")
-                .style("font-size", isMobile ? "8px" : "10px");
-            
-            // Add Y axis label
-            svg.append("text")
-                .attr("class", "axis-label")
-                .attr("text-anchor", "middle")
-                .attr("transform", "rotate(-90)")
-                .attr("x", -height / 2)
-                .attr("y", -margin.left + (isMobile ? 20 : 30))
-                .text("Totale kostnader per måned (kr)")
-                .style("font-size", isMobile ? "10px" : "14px");
-            
-            // Add title
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", -margin.top / 2)
-                .attr("text-anchor", "middle")
-                .style("font-size", isMobile ? "14px" : "18px")
-                .style("font-weight", "bold")
-                .text(address);
-            
-            // Add threshold line
-            svg.append("line")
-                .attr("class", "threshold-line")
-                .attr("x1", 0)
-                .attr("x2", width)
-                .attr("y1", y(threshold))
-                .attr("y2", y(threshold));
-                
-            // Add threshold label
-            svg.append("text")
-                .attr("x", width - 5)
-                .attr("y", y(threshold) - 5)
-                .attr("text-anchor", "end")
-                .style("fill", "red")
-                .style("font-size", isMobile ? "8px" : "12px")
-                .text(formatNumber(threshold));
-            
-            // Add bars
-            svg.selectAll(".bar")
-                .data(costRange)
-                .enter()
-                .append("rect")
-                    .attr("class", "bar")
-                    .attr("x", (d, i) => x(priceRange[i]))
-                    .attr("y", d => y(d))
-                    .attr("width", x.bandwidth())
-                    .attr("height", d => height - y(d));
-            
-            // Add value labels on top of bars (only if not mobile or if mobile with fewer labels)
-            svg.selectAll(".bar-value")
-                .data(costRange)
-                .enter()
-                .append("text")
-                    .attr("class", "bar-value")
-                    .attr("x", (d, i) => x(priceRange[i]) + x.bandwidth() / 2)
-                    .attr("y", d => y(d) - 5)
-                    .style("visibility", function(d, i) {
-                        // On mobile, show fewer values
-                        if (isMobile && i % 2 !== 0) {
-                            return "hidden";
-                        }
-                        return "visible";
-                    })
-                    .style("font-size", isMobile ? "8px" : "10px")
-                    .text(d => formatNumber(d));
-        }
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            }
+        });
     </script>
 </body>
 </html>
