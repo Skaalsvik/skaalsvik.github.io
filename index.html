@@ -429,13 +429,13 @@
                 const emilKostRow = kostnaderTable.insertRow();
                 emilKostRow.insertCell(0).textContent = 'Emil';
                 emilKostRow.insertCell(1).textContent = formatNumber(Math.round(emilManedligLanekostnad)) + ' kr';
-                emilKostRow.insertCell(2).textContent = formatNumber(Math.round(emilMndFelles)) + ' kr (' + (emilEierandelProsent / (sofieEierandelProsent + emilEierandelProsent)).toFixed(0) + '%)';
+                emilKostRow.insertCell(2).textContent = formatNumber(Math.round(emilMndFelles)) + ' kr (' + ((emilEierandelProsent / (sofieEierandelProsent + emilEierandelProsent))*100).toFixed(0) + '%)';
                 emilKostRow.insertCell(3).textContent = formatNumber(Math.round(emilTotalMnd)) + ' kr';
                 
                 const sofieKostRow = kostnaderTable.insertRow();
                 sofieKostRow.insertCell(0).textContent = 'Sofie';
                 sofieKostRow.insertCell(1).textContent = '0 kr';
-                sofieKostRow.insertCell(2).textContent = formatNumber(Math.round(sofieMndFelles)) + ' kr (' + (emilEierandelProsent / (sofieEierandelProsent + emilEierandelProsent)).toFixed(0) + '%)';
+                sofieKostRow.insertCell(2).textContent = formatNumber(Math.round(sofieMndFelles)) + ' kr (' + ((sofieEierandelProsent / (sofieEierandelProsent + emilEierandelProsent))*100).toFixed(0) + '%)';
                 sofieKostRow.insertCell(3).textContent = formatNumber(Math.round(sofieTotalMnd)) + ' kr';
                 
                 const amundKostRow = kostnaderTable.insertRow();
